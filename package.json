@@ -1,0 +1,17 @@
+{
+  "name": "kernel-quest",
+  "version": "1.0.0",
+  "description": "Kernel Quest: Debian Chronicles - RPG por turnos multijugador de SO y Linux Debian",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.10",
+    "express": "^5.2.1",
+    "mysql2": "^3.24.6",
+    "socket.io": "^4.8.3"
+  }
+}

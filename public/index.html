@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KERNEL QUEST v2.0: Mundo Híbrido</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="dq-screen">
+        <!-- PANTALLA 1: ACCESO, LORE, FACCIÓN Y 20 ROLES -->
+        <section id="pantalla-login" class="dq-box login-card activa">
+            <div class="login-banner">
+                <div class="pixel-badge">🐧 ERA DEL CAOS · BETA v2.0</div>
+                <h1 class="titulo-dq">KERNEL QUEST</h1>
+                <p class="subtitulo-dq">Fantasía Híbrida & Sistemas Operativos</p>
+            </div>
+
+            <div class="fila-login-top">
+                <div class="form-group">
+                    <label>▶ ALIAS DEL HÉROE:</label>
+                    <input type="text" id="input-nombre" placeholder="TU NOMBRE..." maxlength="12" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>▶ FACCIÓN:</label>
+                    <div class="selector-faccion">
+                        <button class="btn-fac activo" data-faccion="ALIANZA">🛡️ LA ALIANZA</button>
+                        <button class="btn-fac" data-faccion="RENEGADOS">🔥 RENEGADOS</button>
+                    </div>
+                </div>
+            </div>
+
+            <label>▶ RAMA Y ROL (20 CLASES):</label>
+            <div class="tabs-ramas">
+                <button class="tab-rama activo" data-rama="marcial">⚔️ MARCIAL</button>
+                <button class="tab-rama" data-rama="arcana">🔮 ARCANA</button>
+                <button class="tab-rama" data-rama="sagrada">⚜️ SAGRADA</button>
+                <button class="tab-rama" data-rama="sigilo">🗡️ SIGILO</button>
+                <button class="tab-rama" data-rama="hibrida">⚙️ HÍBRIDA</button>
+            </div>
+
+            <div id="grid-roles" class="grid-roles"></div>
+
+            <!-- Panel de Lore del Rol Seleccionado -->
+            <div class="lore-box" id="lore-box">
+                <div class="lore-header">
+                    <strong id="lore-titulo">PALADÍN DIVINO</strong>
+                    <span id="lore-arquetipo" class="lore-tag">CABALLERO SANTO</span>
+                </div>
+                <p id="lore-texto" class="lore-texto">Cargando historia del personaje...</p>
+                <div id="lore-pasiva" class="lore-pasiva">★ Pasiva: ...</div>
+            </div>
+
+            <button id="btn-unirse" class="dq-btn-main">🌍 ENTRAR AL MUNDO 2D</button>
+            <p id="error-login" class="texto-error"></p>
+        </section>
+
+        <!-- PANTALLA 2: MUNDO ABIERTO 2D -->
+        <section id="pantalla-mundo" class="mundo-layout">
+            <div class="dq-box hud-mundo">
+                <div>
+                    <span id="hud-identidad" class="hud-gold">HÉROE</span>
+                    <span id="hud-faccion" class="mini-tag">ALIANZA</span>
+                </div>
+                <div class="hud-stats">
+                    <span id="hud-zona">🏰 CIUDAD ALIANZA (SEGURA)</span>
+                    <span id="hud-hp">HP: 100/100</span>
+                    <span id="hud-online">👥 1</span>
+                </div>
+            </div>
+
+            <div class="canvas-wrapper dq-box">
+                <canvas id="mapa-canvas" width="800" height="440"></canvas>
+                <div id="aviso-mundo" class="aviso-flotante oculto"></div>
+            </div>
+
+            <div class="dq-box barra-controles-mundo">
+                <div class="controles-info">
+                    Mover: <strong>WASD / Flechas</strong> · Retar rival cercano: <strong>Tecla E</strong>
+                </div>
+                <div class="botones-accion-mundo">
+                    <button id="btn-descansar" class="dq-cmd-mini" onclick="descansarZonaSegura()">💚 DESCANSAR (100% HP)</button>
+                    <button id="btn-retar" class="dq-cmd-mini btn-retar oculto" onclick="retarCercano()">⚔️ RETAR (E)</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANTALLA 3: COMBATE POR TURNOS -->
+        <section id="pantalla-combate" class="combate-layout">
+            <div class="fila-estados">
+                <div class="dq-box estado-box" id="box-j1">
+                    <div class="estado-titulo" id="titulo-j1">J1</div>
+                    <div class="estado-hp">HP: <span id="hp-j1">100/100</span></div>
+                    <div class="hp-bar-bg"><div id="bar-j1" class="hp-bar-fill"></div></div>
+                    <div class="contra-row">
+                        <span>⚡ CONTRA: <strong id="contra-txt-j1">0%</strong></span>
+                        <div class="contra-bar-bg"><div id="contra-bar-j1" class="contra-bar-fill"></div></div>
+                    </div>
+                    <div class="stats-mini" id="stats-j1">AF:0 AM:0 DF:0 DM:0</div>
+                    <div id="tags-j1" class="tags-estado"></div>
+                </div>
+                <div class="dq-box estado-box" id="box-j2">
+                    <div class="estado-titulo" id="titulo-j2">J2</div>
+                    <div class="estado-hp">HP: <span id="hp-j2">100/100</span></div>
+                    <div class="hp-bar-bg"><div id="bar-j2" class="hp-bar-fill"></div></div>
+                    <div class="contra-row">
+                        <span>⚡ CONTRA: <strong id="contra-txt-j2">0%</strong></span>
+                        <div class="contra-bar-bg"><div id="contra-bar-j2" class="contra-bar-fill"></div></div>
+                    </div>
+                    <div class="stats-mini" id="stats-j2">AF:0 AM:0 DF:0 DM:0</div>
+                    <div id="tags-j2" class="tags-estado"></div>
+                </div>
+            </div>
+
+            <div class="dq-box escenario-central bg-castillo" id="escenario-box">
+                <div class="escenario-badge" id="escenario-nombre">🏰 CASTILLO DEL KERNEL</div>
+                <div id="globo-reaccion" class="globo-reaccion oculto"></div>
+                <div id="texto-flotante" class="texto-flotante oculto"></div>
+                <div class="enemigo-sprite" id="sprite-rival"></div>
+                <div class="enemigo-nombre" id="nombre-rival">OPONENTE</div>
+            </div>
+
+            <div class="dq-box log-dq" id="log-dq">¡Combate iniciado!</div>
+
+            <div class="barra-reacciones">
+                <button class="btn-reac" onclick="enviarReaccion('🔥 ¡Buen golpe!')">🔥 ¡Buen golpe!</button>
+                <button class="btn-reac" onclick="enviarReaccion('😅 ¡Casi!')">😅 ¡Casi!</button>
+                <button class="btn-reac" onclick="enviarReaccion('🐧 sudo rm -rf')">🐧 sudo rm -rf</button>
+                <button class="btn-reac" onclick="enviarReaccion('👏 ¡GG!')">👏 ¡GG!</button>
+            </div>
+
+            <div id="menu-comandos" class="dq-box oculto">
+                <div class="titulo-comando">COMANDOS (ELIGE CATEGORÍA)</div>
+                <div class="grid-categorias">
+                    <button class="dq-cmd cat-ataque" onclick="abrirSubmenu('ataque')">⚔️ ATACAR (4)</button>
+                    <button class="dq-cmd cat-apoyo" onclick="abrirSubmenu('apoyo')">💚 CURAR / PROTEGER (4)</button>
+                    <button class="dq-cmd cat-debuff" onclick="abrirSubmenu('debuff')">🌀 DEBUFF (4)</button>
+                </div>
+            </div>
+
+            <div id="submenu-comandos" class="dq-box oculto">
+                <div class="header-submenu">
+                    <span id="titulo-submenu" class="titulo-comando">OPCIONES</span>
+                    <button class="btn-volver" onclick="volverMenuPrincipal()">◀ VOLVER</button>
+                </div>
+                <div id="grid-submenu" class="grid-comandos"></div>
+            </div>
+
+            <div id="panel-pasiva" class="dq-box oculto">
+                <div class="titulo-comando">🌟 ORÁCULO DEL KERNEL (10s)</div>
+                <p id="desc-pasiva" class="texto-retro"></p>
+                <div class="grid-comandos">
+                    <button class="dq-cmd" onclick="responderPasiva(true)">▶ ACEPTAR RETO</button>
+                    <button class="dq-cmd" onclick="responderPasiva(false)">▶ SALTAR (SEGURO)</button>
+                </div>
+            </div>
+
+            <div id="panel-pregunta" class="dq-box oculto">
+                <div class="header-preg">
+                    <span id="preg-titulo">HABILIDAD</span>
+                    <div>
+                        <span id="preg-timer" class="tag-timer oculto">⏱️ 10s</span>
+                        <span id="preg-dif" class="tag-medio">MEDIO</span>
+                    </div>
+                </div>
+                <p id="preg-texto" class="texto-pregunta"></p>
+                <div id="preg-opciones" class="lista-opciones"></div>
+            </div>
+        </section>
+    </div>
+
+    <script src="client.js"></script>
+</body>
+</html>
